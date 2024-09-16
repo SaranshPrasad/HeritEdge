@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const pool = require('./db');
+const jwt = require('jsonwebtoken'); 
 
 const app = express();
 const SECRET_KEY = 'sadhgduwielbxio2h3e3nshe28';
@@ -14,14 +15,24 @@ app.use(cors({
     methods: ['GET', 'POST', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; 
+
+    if (token == null) return res.sendStatus(401);
+    jwt.verify(token, SECRET_KEY, (err, user) => {
+        if (err) return res.sendStatus(403); 
+        req.user = user;
+        next();
+    });
+};
 
 // Body Parser Configuration
 app.use(bodyParser.json());
 
 // Sign Up page handler
 app.post('/signup', async (req, res) => {
-    const { username , address , phone_no , email , password} = req.body;
-
+    const { username , email , password} = req.body;
     try {
         const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
 
@@ -30,10 +41,10 @@ app.post('/signup', async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-
+       
         const newUser = await pool.query(
-            'INSERT INTO users (username , address , phone_no , email , password) VALUES ($1, $2, $3, $4 , $5) RETURNING *',
-            [username, address, phone_no , email , hashedPassword]
+            'INSERT INTO users (username , email , password) VALUES ($1, $2, $3) RETURNING *',
+            [username, email , hashedPassword]
         );
 
         const token = jwt.sign({ id: newUser.rows[0].id }, SECRET_KEY, { expiresIn: '1h' });
@@ -64,7 +75,7 @@ app.post('/login', async (req, res) => {
 
         const existingUser = user.rows[0];
 
-        const isMatch = await bcrypt.compare(password, existingUser.password_hash);
+        const isMatch = await bcrypt.compare(password, existingUser.password);
 
         if (!isMatch) {
             return res.status(401).json({ success: false, message: 'Invalid email or password.' });
@@ -81,10 +92,10 @@ app.post('/login', async (req, res) => {
 
 //  Vendor Auth 
 app.post('/vendor/signup', async (req, res) => {
-    const { name, email, password, address, photo_url , vendor_bio , phone_no} = req.body;
+    const { username, email, password} = req.body;
 
     try {
-        const vendor = await pool.query('SELECT * FROM vendor WHERE v_email = $1', [email]);
+        const vendor = await pool.query('SELECT * FROM vendors WHERE email = $1', [email]);
 
         if (vendor.rows.length > 0) {
             return res.status(400).json({ success: false, message: 'Vendor already exists.' });
@@ -93,11 +104,11 @@ app.post('/vendor/signup', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newVendor = await pool.query(
-            'INSERT INTO vendor (v_name, v_email, v_password, v_address , v_photo , v_bio , v_phone_no) VALUES ($1, $2, $3, $4, $5, $6 , $7) RETURNING *',
-            [name, email, hashedPassword, address, photo_url , vendor_bio , phone_no]
+            'INSERT INTO vendors (username, email, password) VALUES ($1, $2, $3) RETURNING *',
+            [username, email, hashedPassword]
         );
 
-        const token = jwt.sign({ id: newVendor.rows[0].id }, SECRET_KEY, { expiresIn: '1h' });
+        const token = jwt.sign({ id: newVendor.rows[0].v_id }, SECRET_KEY, { expiresIn: '1h' });
 
         res.status(201).json({ success: true, message: 'Vendor registered successfully!', token, vendor: newVendor });
     } catch (err) {
@@ -116,7 +127,7 @@ app.post('/vendor/login', async (req, res) => {
         }
 
         
-        const vendor = await pool.query('SELECT * FROM vendor WHERE v_email = $1', [email]);
+        const vendor = await pool.query('SELECT * FROM vendors WHERE email = $1', [email]);
 
         if (vendor.rows.length === 0) {
             return res.status(401).json({ success: false, message: 'Invalid email or password.' });
@@ -124,13 +135,13 @@ app.post('/vendor/login', async (req, res) => {
 
         const existingVendor = vendor.rows[0];
 
-        const isMatch = await bcrypt.compare(password, existingVendor.v_password);
+        const isMatch = await bcrypt.compare(password, existingVendor.password);
 
         if (!isMatch) {
             return res.status(401).json({ success: false, message: 'Invalid email or password.' });
         }
         const token = jwt.sign({ id: existingVendor.v_id }, SECRET_KEY, { expiresIn: '1h' });
-        res.status(200).json({ success: true, message: 'Login successful!', vendor: existingVendor, v_name: existingVendor.v_name, v_id:existingVendor.v_id, token});
+        res.status(200).json({ success: true, message: 'Login successful!', vendor: existingVendor, v_name: existingVendor.username, v_id:existingVendor.v_id, token});
     } catch (err) {
         console.error('Database query error:', err);
         res.status(500).json({ success: false, message: 'Internal server error.' });
