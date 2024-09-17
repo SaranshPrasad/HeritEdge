@@ -6,20 +6,27 @@ import Home from './Components/Home';
 import Login from './Components/Login';
 import VendorLogin from './Components/VendorLogin';
 import VendorSignUp from './Components/VendorSignUp';
+import Footer from './Components/Footer';
+import Header from './Components/Header';
 
 
 function App() {
 
   return (
-    
     <Router>
-      <Routes>
-        <Route path='/' element={<Home/>}></Route>
-        <Route path='signup' element={<SignUp/>}></Route>
-        <Route path='login' element={<Login/>}></Route>
-        <Route path='vendor/login' element={<VendorLogin/>}></Route>
-        <Route path='vendor/signup' element={<VendorSignUp/>}></Route>
-      </Routes>
+    <div className="App">       
+        <Header />
+        <main>
+          <Routes>
+            <Route path='/' element={<Home />} />
+            <Route path='signup' element={<SignUp />} />
+            <Route path='login' element={<Login />} />
+            <Route path='vendor/login' element={<VendorLogin />} />
+            <Route path='vendor/signup' element={<VendorSignUp />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
     </Router>
     
   );
