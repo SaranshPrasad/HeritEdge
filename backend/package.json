@@ -1,21 +1,21 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "HeritEdge Backend ",
+  "main": "src/app.js",
   "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Saransh",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.7.7",
-    "bcryptjs": "^2.4.3",
-    "body-parser": "^1.20.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.0",
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.7",
+    "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.12.0"
+    "pg": "^8.13.1",
+    "pool": "^0.4.1"
   }
 }
