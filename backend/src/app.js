@@ -15,8 +15,9 @@ pool
   .catch(err => console.error('Connection error', err.stack));
 
 const authRouter = require('./routes/auth');
-
-
+const profileRouter = require('./routes/profile');
+const vendorAuthRouter = require('./routes/vendorAuth');
+const vendorProfileRouter = require('./routes/vendorProfile');
 // middlewares 
 app.use(express.json());
 app.use(cookieParser())
@@ -28,6 +29,9 @@ app.get("/", (req, res) => {
 
 
 app.use("/", authRouter);
+app.use("/", profileRouter);
+app.use("/", vendorAuthRouter);
+app.use("/", vendorProfileRouter);
 
 
 
